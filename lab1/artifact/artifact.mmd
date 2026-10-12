@@ -1,11 +1,12 @@
 erDiagram
+    direction LR
     User {
         uuid id PK
         string email UK
         string hashed_password
         string nickname UK
         string name
-        text description
+        string description
         string avatar_url
         timestamp created_at
     }
@@ -13,8 +14,8 @@ erDiagram
     Game_Account {
         uuid id PK
         uuid user_id FK
-        string game_name
-        string game_account_id UK
+        string game_name UK "pair with game_account_id"
+        string game_account_id UK "pair with game_name"
     }
 
     Team {
@@ -23,7 +24,7 @@ erDiagram
         string avatar_url
         timestamp created_at
         int max_team_players
-        team_status team_status
+        team_status status
     }
 
     Team_Member {
@@ -32,8 +33,8 @@ erDiagram
         uuid user_id FK
         timestamp joined_at
         timestamp leave_at
-        team_member_status team_member_status
-        team_role team_role
+        team_member_status status
+        team_role role
     }
 
     Tournament {
@@ -49,75 +50,57 @@ erDiagram
         int max_teams
         int min_team_players
         int max_team_players
-        tournament_status tournament_status
+        tournament_status status
     }
 
     Tournament_Application {
         uuid id PK
-        uuid tournament_id FK "unique with team_id"
-        uuid team_id FK "unique with tournament_id"
-        tournament_participant_status tournament_participant_status
-    }
-
-    Tournament_Application_Member {
-        uuid id PK
-        uuid tournament_id FK "unique with user_id"
-        uuid tournament_application_id FK
-        uuid user_id FK "unique with tournament_id"
+        uuid tournament_id FK, UK "pair with team_id"
+        uuid team_id FK, UK "pair with tournament_id"
+        tournament_participant_status status
     }
 
     Encounter {
         uuid id PK
         uuid tournament_id FK
-        int stage
+        string stage
         uuid tournament_application_id_1 FK
         uuid tournament_application_id_2 FK
         uuid winner_tournament_application_id FK
         uuid next_encounter_id FK
-        encounter_status encounter_status
+        encounter_status status
     }
 
     Match {
         uuid id PK
-        uuid encounter_id FK "unique with map_order"
+        uuid encounter_id FK, UK "pair with map_order"
         string match_game_id
-        int map_order "unique with encounter_id"
+        int map_order UK "pair with encounter_id"
         uuid winner_tournament_application_id FK
     }
 
     Player_Statistic {
         uuid id PK
-        uuid match_id FK "unique with user_id"
-        uuid user_id FK "unique with match_id"
+        uuid match_id FK, UK "pair with user_id"
+        uuid user_id FK, UK "pair with match_id"
         int kills
         int deaths
         int assists
     }
 
-    User ||--o{ Team_Member : has_membership
-    Team ||--o{ Team_Member : includes
-
-    User ||--o{ Tournament : organizes
-
-    Team ||--o{ Tournament_Application : submits
-    Tournament ||--o{ Tournament_Application : receives
-
-    User ||--o{ Tournament_Application_Member : registered_as
-    Tournament_Application ||--o{ Tournament_Application_Member : lists
-    Tournament ||--o{ Tournament_Application_Member : contains
-
-    Tournament ||--o{ Encounter : contains
-
-    Tournament_Application ||--o{ Encounter : plays_as_first
-    Tournament_Application ||--o{ Encounter : plays_as_second
-    Tournament_Application |o--o{ Encounter : wins
-
-    Encounter |o--o{ Encounter : advances_to
-
-    Encounter ||--|{ Match : consists_of
-    Tournament_Application |o--o{ Match : wins
-
-    Match ||--o{ Player_Statistic : records
-    User ||--o{ Player_Statistic : has_stats
-
     User ||--o{ Game_Account : owns
+    User ||--o{ Team_Member : joins
+    Team ||--o{ Team_Member : includes
+    Team ||--o{ Tournament_Application : submits
+    User ||--o{ Tournament : organizes
+    Tournament ||--o{ Tournament_Application : receives
+    Tournament_Application }o--o{ User : registers
+    Tournament ||--o{ Encounter : contains
+    Tournament_Application |o--o{ Encounter : first
+    Tournament_Application |o--o{ Encounter : second
+    Tournament_Application |o--o{ Encounter : wins
+    Encounter |o--o{ Encounter : advances
+    Encounter ||--o{ Match : comprises
+    Tournament_Application |o--o{ Match : wins
+    Match ||--o{ Player_Statistic : records
+    User ||--o{ Player_Statistic : earns
