@@ -1,110 +1,123 @@
 erDiagram
-  USER ||--o{ GAME_ACCOUNT : "має"
-  USER ||--o{ TEAM_MEMBER : "є учасником"
-  TEAM ||--o{ TEAM_MEMBER : "містить"
-  USER ||--o{ TOURNAMENT : "організовує"
-  TOURNAMENT ||--o{ TOURNAMENT_APPLICATION : "приймає"
-  TEAM ||--o{ TOURNAMENT_APPLICATION : "подає"
-  TOURNAMENT_APPLICATION ||--o{ TOURNAMENT_APPLICATION_MEMBER : "склад"
-  USER ||--o{ TOURNAMENT_APPLICATION_MEMBER : "заявлений"
-  TOURNAMENT ||--o{ TOURNAMENT_APPLICATION_MEMBER : "містить"
-  TOURNAMENT ||--o{ ENCOUNTER : "містить"
-  TOURNAMENT_APPLICATION |o--o{ ENCOUNTER : "команда 1"
-  TOURNAMENT_APPLICATION |o--o{ ENCOUNTER : "команда 2"
-  TOURNAMENT_APPLICATION |o--o{ ENCOUNTER : "переможець"
-  ENCOUNTER |o--o{ ENCOUNTER : "наступна"
-  ENCOUNTER ||--|{ MATCH : "складається з"
-  TOURNAMENT_APPLICATION |o--o{ MATCH : "переможець"
-  MATCH ||--o{ PLAYER_STATISTIC : "містить"
-  USER ||--o{ PLAYER_STATISTIC : "має"
+    User {
+        uuid id PK
+        string email UK
+        string hashed_password
+        string nickname UK
+        string name
+        text description
+        string avatar_url
+        timestamp created_at
+    }
 
-  USER {
-    uuid id PK
-    string email UK
-    string hashed_password
-    string nickname UK
-    string name
-    string description
-    string avatar_url
-    timestamp created_at
-  }
+    Game_Account {
+        uuid id PK
+        uuid user_id FK
+        string game_name
+        string game_account_id UK
+    }
 
-  GAME_ACCOUNT {
-    uuid user_id PK,FK
-    string game_name
-    string game_account_id UK
-  }
+    Team {
+        uuid id PK
+        string name UK
+        string avatar_url
+        timestamp created_at
+        int max_team_players
+        team_status team_status
+    }
 
-  TEAM {
-    uuid id PK
-    string name UK
-    string avatar_url
-    timestamp created_at
-    int max_team_players
-    team_status status
-  }
+    Team_Member {
+        uuid id PK
+        uuid team_id FK
+        uuid user_id FK
+        timestamp joined_at
+        timestamp leave_at
+        team_member_status team_member_status
+        team_role team_role
+    }
 
-  TEAM_MEMBER {
-    uuid id PK
-    uuid team_id FK
-    uuid user_id FK
-    timestamp joined_at
-    timestamp leave_at
-    team_member_status status
-    team_role role
-  }
+    Tournament {
+        uuid id PK
+        uuid organizer_id FK
+        string game_name
+        string name
+        timestamp created_at
+        timestamp start_at
+        decimal prize_pool
+        string currency
+        int min_teams
+        int max_teams
+        int min_team_players
+        int max_team_players
+        tournament_status tournament_status
+    }
 
-  TOURNAMENT {
-    uuid id PK
-    uuid organizer_id FK
-    string game_name
-    timestamp created_at
-    timestamp start_at
-    string name
-    decimal prize_pool
-    string currency
-    int max_teams
-    int min_teams
-    int min_team_players
-    int max_team_players
-    tournament_status status
-  }
+    Tournament_Application {
+        uuid id PK
+        uuid tournament_id FK "unique with team_id"
+        uuid team_id FK "unique with tournament_id"
+        tournament_participant_status tournament_participant_status
+    }
 
-  TOURNAMENT_APPLICATION {
-    uuid tournament_id PK,FK
-    uuid team_id PK,FK
-    tournament_participant_status status
-  }
+    Tournament_Application_Member {
+        uuid id PK
+        uuid tournament_id FK "unique with user_id"
+        uuid tournament_application_id FK
+        uuid user_id FK "unique with tournament_id"
+    }
 
-  TOURNAMENT_APPLICATION_MEMBER {
-    uuid tournament_id PK,FK
-    uuid tournament_application_id FK
-    uuid user_id PK,FK
-  }
+    Encounter {
+        uuid id PK
+        uuid tournament_id FK
+        int stage
+        uuid tournament_application_id_1 FK
+        uuid tournament_application_id_2 FK
+        uuid winner_tournament_application_id FK
+        uuid next_encounter_id FK
+        encounter_status encounter_status
+    }
 
-  ENCOUNTER {
-    uuid id PK
-    uuid tournament_id FK
-    string stage
-    uuid tournament_application_id_1 FK
-    uuid tournament_application_id_2 FK
-    uuid winner_tournament_application_id FK
-    uuid next_encounter_id FK
-    encounter_status status
-  }
+    Match {
+        uuid id PK
+        uuid encounter_id FK "unique with map_order"
+        string match_game_id
+        int map_order "unique with encounter_id"
+        uuid winner_tournament_application_id FK
+    }
 
-  MATCH {
-    uuid id PK
-    string match_game_id
-    uuid encounter_id FK
-    int map_order
-    uuid winner_tournament_application_id FK
-  }
+    Player_Statistic {
+        uuid id PK
+        uuid match_id FK "unique with user_id"
+        uuid user_id FK "unique with match_id"
+        int kills
+        int deaths
+        int assists
+    }
 
-  PLAYER_STATISTIC {
-    uuid match_id PK,FK
-    uuid user_id PK,FK
-    int kills
-    int deaths
-    int assists
-  }
+    User ||--o{ Team_Member : has_membership
+    Team ||--o{ Team_Member : includes
+
+    User ||--o{ Tournament : organizes
+
+    Team ||--o{ Tournament_Application : submits
+    Tournament ||--o{ Tournament_Application : receives
+
+    User ||--o{ Tournament_Application_Member : registered_as
+    Tournament_Application ||--o{ Tournament_Application_Member : lists
+    Tournament ||--o{ Tournament_Application_Member : contains
+
+    Tournament ||--o{ Encounter : contains
+
+    Tournament_Application ||--o{ Encounter : plays_as_first
+    Tournament_Application ||--o{ Encounter : plays_as_second
+    Tournament_Application |o--o{ Encounter : wins
+
+    Encounter |o--o{ Encounter : advances_to
+
+    Encounter ||--|{ Match : consists_of
+    Tournament_Application |o--o{ Match : wins
+
+    Match ||--o{ Player_Statistic : records
+    User ||--o{ Player_Statistic : has_stats
+
+    User ||--o{ Game_Account : owns
