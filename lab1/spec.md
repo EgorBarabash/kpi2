@@ -19,8 +19,11 @@
 Атрибути: id (PK), email (UK), hashed_password, nickname (UK), name, description, avatar_url, created_at.
 
 **Game_Account (Ігровий акаунт)** - прив'язка користувача до його акаунта в конкретній грі.
-Атрибути: id (PK), user_id (FK), game_name, game_account_id.
-Пара (game_name, game_account_id) унікальна.
+Атрибути: id (PK), user_id (FK), game_id (FK), game_account_id.
+Пара (game_id, game_account_id) унікальна.
+
+**Game (Гра)** - гра, з якої проводяться турніри.
+Атрибути: id (PK), name (UK), logo_url
 
 **Team (Команда)** - група гравців, що виступає разом.
 Атрибути: id (PK), name (UK), avatar_url, created_at, max_team_players, status (team_status).
@@ -29,7 +32,7 @@
 Атрибути: id (PK), team_id (FK), user_id (FK), joined_at, leave_at, status (team_member_status), role (team_role).
 
 **Tournament (Турнір)** - змагання з однієї гри, яке створює організатор.
-Атрибути: id (PK), organizer_id (FK), game_name, name, created_at, start_at, prize_pool, currency, min_teams, max_teams, min_team_players, max_team_players, status (tournament_status).
+Атрибути: id (PK), organizer_id (FK), game_id (FK), name, created_at, start_at, prize_pool, currency, min_teams, max_teams, min_team_players, max_team_players, status (tournament_status).
 
 **Tournament_Application (Заявка на турнір)** - заявка команди на участь у турнірі.
 Атрибути: id (PK), tournament_id (FK), team_id (FK), status (tournament_participant_status).
@@ -65,7 +68,7 @@
 2. Усі первинні ключі (PK) мають назву id та тип uuid. Природна унікальність задається в spec парами атрибутів і позначається на діаграмі.
 3. Текст зв'язків у Mermaid - англійською, одним словом, без лапок.
 4. N:M без власних атрибутів показується прямим зв'язком (`}o--o{`) без проміжної сутності; асоціативна сутність допускається лише тоді, коли зв'язок має власні атрибути.
-5. Модель у 3NF: жоден атрибут не дублює дані, які можна отримати через інший зв'язок.
+5. Модель у 3NF: жоден атрибут не дублює дані, які можна отримати через інший зв'язок.Довідкові значення, що повторюються в кількох сутностях, виносяться в окрему сутність.
 6. Назви й склад атрибутів на діаграмі збігаються зі spec; статуси й ролі мають назву status / role, а їхній тип - enum із розділу «Типи».
 7. Типи атрибутів: ідентифікатори - uuid; текстові - string; кількості та порядкові номери - int; суми - decimal; дати - timestamp; статуси й ролі - enum-типи з розділу «Типи». Інші типи не використовуються.
 8. Кардинальності й обов'язковість на діаграмі беруться з розділу «Зв'язки»; якщо обов'язковість у spec не вказана - це помилка spec, а не рішення для AI.
