@@ -11,7 +11,7 @@
 - **tournament_status**: registration, ongoing, finished
 - **tournament_participant_status**: pending, accepted, rejected
 - **encounter_status**: scheduled, ongoing, finished
-- **team_role**: player, captain
+- **team_role**: player, captain, coach
 
 ## Сутності
 
@@ -28,8 +28,11 @@
 **Team (Команда)** - група гравців, що виступає разом.
 Атрибути: id (PK), name (UK), avatar_url, created_at, max_team_players, status (team_status).
 
-**Team_Member (Учасник команди)** - членство користувача в команді з роллю та історією.
-Атрибути: id (PK), team_id (FK), user_id (FK), joined_at, leave_at, status (team_member_status), role (team_role).
+**Team_Member (Учасник команди)** - членство користувача в команді з історією.
+Атрибути: id (PK), team_id (FK), user_id (FK), joined_at, leave_at, status (team_member_status).
+
+**Team_Member_Role (Призначення ролі) - роль учасника в команді за період часу.
+Атрибути: id (PK), team_member_id (FK), role (team_role), assigned_at, unassigned_at.
 
 **Tournament (Турнір)** - змагання з однієї гри, яке створює організатор.
 Атрибути: id (PK), organizer_id (FK), game_id (FK), name, created_at, start_at, prize_pool, currency, min_teams, max_teams, min_team_players, max_team_players, status (tournament_status).
