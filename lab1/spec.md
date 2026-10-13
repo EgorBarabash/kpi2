@@ -43,6 +43,7 @@
 
 **Encounter (Зустріч)** - протистояння двох заявок у турнірній сітці.
 Атрибути: id (PK), tournament_id (FK), stage (назва етапу сітки), max_matches, tournament_application_id_1 (FK), tournament_application_id_2 (FK), winner_tournament_application_id (FK), next_encounter_id (FK), status (encounter_status).
+max_matches - формат зустрічі (BO): 1, 3 або 5.
 
 **Match (Матч)** - окрема гра (мапа) в межах зустрічі.
 Атрибути: id (PK), encounter_id (FK), match_game_id, map_order, winner_tournament_application_id (FK).
