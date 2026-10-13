@@ -1,0 +1,128 @@
+---
+config:
+  layout: elk
+  er:
+    layoutDirection: TB
+---
+erDiagram
+    User {
+        uuid id PK
+        string email UK
+        string hashed_password
+        string nickname UK
+        string name
+        string description
+        string avatar_url
+        timestamp created_at
+    }
+
+    Game {
+        uuid id PK
+        string name UK
+        string logo_url
+    }
+
+    Game_Account {
+        uuid id PK
+        uuid user_id FK
+        uuid game_id FK, UK "UK(game_id, game_account_id)"
+        string game_account_id UK "UK(game_id, game_account_id)"
+    }
+
+    Team {
+        uuid id PK
+        string name UK
+        string avatar_url
+        timestamp created_at
+        int max_team_players
+        team_status status
+    }
+
+    Team_Member {
+        uuid id PK
+        uuid team_id FK
+        uuid user_id FK
+        timestamp joined_at
+        timestamp leave_at
+        team_member_status status
+    }
+
+    Team_Member_Role {
+        uuid id PK
+        uuid team_member_id FK
+        team_role role
+        timestamp assigned_at
+        timestamp unassigned_at
+    }
+
+    Tournament {
+        uuid id PK
+        uuid organizer_id FK
+        uuid game_id FK
+        string name
+        timestamp created_at
+        timestamp start_at
+        decimal prize_pool
+        string currency
+        int min_teams
+        int max_teams
+        int min_team_players
+        int max_team_players
+        tournament_status status
+    }
+
+    Tournament_Application {
+        uuid id PK
+        uuid tournament_id FK, UK "UK(tournament_id, team_id)"
+        uuid team_id FK, UK "UK(tournament_id, team_id)"
+        tournament_participant_status status
+    }
+
+    Encounter {
+        uuid id PK
+        uuid tournament_id FK
+        string stage
+        int max_matches
+        uuid tournament_application_id_1 FK
+        uuid tournament_application_id_2 FK
+        uuid winner_tournament_application_id FK
+        uuid next_encounter_id FK
+        encounter_status status
+    }
+
+    Match {
+        uuid id PK
+        uuid encounter_id FK, UK "UK(encounter_id, map_order)"
+        string match_game_id
+        int map_order UK "UK(encounter_id, map_order)"
+        uuid winner_tournament_application_id FK
+    }
+
+    Player_Statistic {
+        uuid id PK
+        uuid match_id FK, UK "UK(match_id, user_id)"
+        uuid user_id FK, UK "UK(match_id, user_id)"
+        int kills
+        int deaths
+        int assists
+    }
+
+    User ||--o{ Team_Member : joins
+    Team ||--o{ Team_Member : includes
+    Team_Member ||--|{ Team_Member_Role : assigned
+    User ||--o{ Tournament : organizes
+    Game ||--o{ Tournament : hosts
+    User ||--o{ Game_Account : owns
+    Game ||--o{ Game_Account : registers
+    Team ||--o{ Tournament_Application : submits
+    Tournament ||--o{ Tournament_Application : receives
+    Tournament_Application }o--o{ User : lists
+    Tournament ||--o{ Encounter : contains
+    Tournament_Application |o--o{ Encounter : first
+    Tournament_Application |o--o{ Encounter : second
+    Tournament_Application |o--o{ Encounter : wins
+    Encounter |o--o{ Encounter : advances
+    Encounter ||--o{ Match : includes
+    Tournament_Application |o--o{ Match : takes
+    Match ||--o{ Player_Statistic : records
+    User ||--o{ Player_Statistic : earns
