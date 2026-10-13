@@ -1,5 +1,10 @@
+---
+config:
+  layout: elk
+  er:
+    layoutDirection: TB
+---
 erDiagram
-    direction LR
     User {
         uuid id PK
         string email UK
@@ -11,11 +16,17 @@ erDiagram
         timestamp created_at
     }
 
+    Game {
+        uuid id PK
+        string name UK
+        string logo_url
+    }
+
     Game_Account {
         uuid id PK
         uuid user_id FK
-        string game_name UK "pair with game_account_id"
-        string game_account_id UK "pair with game_name"
+        uuid game_id FK, UK "UK(game_id, game_account_id)"
+        string game_account_id UK "UK(game_id, game_account_id)"
     }
 
     Team {
@@ -34,13 +45,20 @@ erDiagram
         timestamp joined_at
         timestamp leave_at
         team_member_status status
+    }
+
+    Team_Member_Role {
+        uuid id PK
+        uuid team_member_id FK
         team_role role
+        timestamp assigned_at
+        timestamp unassigned_at
     }
 
     Tournament {
         uuid id PK
         uuid organizer_id FK
-        string game_name
+        uuid game_id FK
         string name
         timestamp created_at
         timestamp start_at
@@ -55,8 +73,8 @@ erDiagram
 
     Tournament_Application {
         uuid id PK
-        uuid tournament_id FK, UK "pair with team_id"
-        uuid team_id FK, UK "pair with tournament_id"
+        uuid tournament_id FK, UK "UK(tournament_id, team_id)"
+        uuid team_id FK, UK "UK(tournament_id, team_id)"
         tournament_participant_status status
     }
 
@@ -64,6 +82,7 @@ erDiagram
         uuid id PK
         uuid tournament_id FK
         string stage
+        int max_matches
         uuid tournament_application_id_1 FK
         uuid tournament_application_id_2 FK
         uuid winner_tournament_application_id FK
@@ -73,34 +92,37 @@ erDiagram
 
     Match {
         uuid id PK
-        uuid encounter_id FK, UK "pair with map_order"
+        uuid encounter_id FK, UK "UK(encounter_id, map_order)"
         string match_game_id
-        int map_order UK "pair with encounter_id"
+        int map_order UK "UK(encounter_id, map_order)"
         uuid winner_tournament_application_id FK
     }
 
     Player_Statistic {
         uuid id PK
-        uuid match_id FK, UK "pair with user_id"
-        uuid user_id FK, UK "pair with match_id"
+        uuid match_id FK, UK "UK(match_id, user_id)"
+        uuid user_id FK, UK "UK(match_id, user_id)"
         int kills
         int deaths
         int assists
     }
 
-    User ||--o{ Game_Account : owns
     User ||--o{ Team_Member : joins
     Team ||--o{ Team_Member : includes
-    Team ||--o{ Tournament_Application : submits
+    Team_Member ||--|{ Team_Member_Role : assigned
     User ||--o{ Tournament : organizes
+    Game ||--o{ Tournament : hosts
+    User ||--o{ Game_Account : owns
+    Game ||--o{ Game_Account : registers
+    Team ||--o{ Tournament_Application : submits
     Tournament ||--o{ Tournament_Application : receives
-    Tournament_Application }o--o{ User : registers
+    Tournament_Application }o--o{ User : lists
     Tournament ||--o{ Encounter : contains
     Tournament_Application |o--o{ Encounter : first
     Tournament_Application |o--o{ Encounter : second
     Tournament_Application |o--o{ Encounter : wins
     Encounter |o--o{ Encounter : advances
-    Encounter ||--o{ Match : comprises
-    Tournament_Application |o--o{ Match : wins
+    Encounter ||--o{ Match : includes
+    Tournament_Application |o--o{ Match : takes
     Match ||--o{ Player_Statistic : records
     User ||--o{ Player_Statistic : earns
