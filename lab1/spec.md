@@ -12,11 +12,13 @@
 - **tournament_participant_status**: pending, accepted, rejected
 - **encounter_status**: scheduled, ongoing, finished
 - **team_role**: player, captain, coach
+- **team_invite_status**: sent, accepted, declined
+- **user_role**: user, admin
 
 ## Сутності
 
-**User (Користувач)** - зареєстрована особа: гравець або організатор.
-Атрибути: id (PK), email (UK), hashed_password, nickname (UK), name, description, avatar_url, created_at.
+**User (Користувач)** - зареєстрована особа: гравець, організатор або адміністратор.
+Атрибути: id (PK), email (UK), hashed_password, nickname (UK), name, description, avatar_url, created_at, role (user_role).
 
 **Game_Account (Ігровий акаунт)** - прив'язка користувача до його акаунта в конкретній грі.
 Атрибути: id (PK), user_id (FK), game_id (FK), game_account_id.
@@ -33,6 +35,9 @@
 
 **Team_Member_Role (Призначення ролі)** - роль учасника в команді за період часу.
 Атрибути: id (PK), team_member_id (FK), role (team_role), assigned_at, unassigned_at.
+
+**Team_Invite (Запрошення до команди)** - запрошення користувача до команди.
+Атрибути: id (PK), team_id (FK), user_id (FK), created_at, status (team_invite_status).
 
 **Tournament (Турнір)** - змагання з однієї гри, яке створює організатор.
 Атрибути: id (PK), organizer_id (FK), game_id (FK), name, created_at, start_at, prize_pool, currency, min_teams, max_teams, min_team_players, max_team_players, status (tournament_status).
@@ -68,6 +73,7 @@ max_matches - формат зустрічі (BO): 1, 3 або 5.
 11. **Game - Tournament (1:N)**. Гра може мати 0..N турнірів, кожен турнір проводиться строго з однієї гри.
 12. **Game - Game_Account (1:N)**. Гра може мати 0..N ігрових акаунтів, кожен акаунт належить строго одній грі.
 13. **Team_Member - Team_Member_Role (1:N)**. Учасник має 1..N призначень ролей (поточне та історичні), кожне призначення належить строго одному учаснику. Зв'язок має власні атрибути (період дії), тому реалізований асоціативною сутністю, а не прямим N:M. Бізнес-правило: у команді одночасно не більше одного активного капітана (unassigned_at порожній).
+14. **Team - User (N:M, запрошення)**. Команда може надіслати 0..N запрошень, користувач може отримати 0..N запрошень; кожне запрошення належить строго одній команді й одному користувачу. Зв'язок має власні атрибути (created_at, status), тому реалізований асоціативною сутністю Team_Invite. Бізнес-правило: не можна запрошувати того, хто вже є учасником цієї команди та не більше одного запрошення sent на пару (team, user).
 
 ## Критерії прийняття
 
