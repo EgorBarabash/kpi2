@@ -14,6 +14,7 @@ erDiagram
         string description
         string avatar_url
         timestamp created_at
+        user_role role
     }
 
     Game {
@@ -53,6 +54,14 @@ erDiagram
         team_role role
         timestamp assigned_at
         timestamp unassigned_at
+    }
+
+    Team_Invite {
+        uuid id PK
+        uuid team_id FK
+        uuid user_id FK
+        timestamp created_at
+        team_invite_status status
     }
 
     Tournament {
@@ -110,6 +119,8 @@ erDiagram
     User ||--o{ Team_Member : joins
     Team ||--o{ Team_Member : includes
     Team_Member ||--|{ Team_Member_Role : assigned
+    Team ||--o{ Team_Invite : sends
+    User ||--o{ Team_Invite : receives
     User ||--o{ Tournament : organizes
     Game ||--o{ Tournament : hosts
     User ||--o{ Game_Account : owns
