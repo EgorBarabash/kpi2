@@ -9,7 +9,7 @@
 - **team_status**: active, disbanded
 - **team_member_status**: active, left, kicked
 - **tournament_status**: registration, ongoing, finished
-- **tournament_participant_status**: pending, accepted, rejected
+- **tournament_participant_status**: pending, accepted, rejected, invalid
 - **encounter_status**: scheduled, ongoing, finished
 - **team_role**: player, captain, coach
 - **team_invite_status**: sent, accepted, declined
@@ -44,7 +44,6 @@
 
 **Tournament_Application (Заявка на турнір)** - заявка команди на участь у турнірі.
 Атрибути: id (PK), tournament_id (FK), team_id (FK), status (tournament_participant_status).
-Пара (tournament_id, team_id) унікальна.
 
 **Encounter (Зустріч)** - протистояння двох заявок у турнірній сітці.
 Атрибути: id (PK), tournament_id (FK), stage (назва етапу сітки), max_matches, tournament_application_id_1 (FK), tournament_application_id_2 (FK), winner_tournament_application_id (FK), next_encounter_id (FK), status (encounter_status).
@@ -62,8 +61,8 @@ max_matches - формат зустрічі (BO): 1, 3 або 5.
 
 1. **User - Team (N:M)**. Гравець може бути учасником багатьох команд, і команда може містити багатьох учасників. Зв'язок має власні атрибути, тому реалізований асоціативною сутністю Team_Member.
 2. **User - Tournament (1:N)**. Користувач може створити багато турнірів, але турнір має лише одного організатора.
-3. **Team - Tournament (N:M)**. Команда може подати заявку на багато турнірів, і турнір містить багато команд-учасників. Зв'язок має власні атрибути, тому реалізований асоціативною сутністю Tournament_Application.
-4. **Tournament_Application - User (N:M)**. Заявка містить склад гравців (0..N), а користувач може бути заявлений у багатьох заявках. Власних атрибутів зв'язок не має, тому це пряма N:M без проміжної сутності. Бізнес-правило: у межах одного турніру користувач може бути заявлений не більше ніж в одній заявці.
+3. **Team - Tournament (N:M)**. Команда може подати заявку на багато турнірів, і турнір містить багато команд-учасників. Зв'язок має власні атрибути, тому реалізований асоціативною сутністю Tournament_Application. Бізнес-правило: на пару (tournament, team) - не більше однієї заявки не в статусі rejected; повторна подача після rejected - новий запис.
+4. **Tournament_Application - User (N:M)**. Заявка містить склад гравців (0..N), а користувач може бути заявлений у багатьох заявках. Власних атрибутів зв'язок не має, тому це пряма N:M без проміжної сутності. Бізнес-правило: у межах одного турніру користувач може бути заявлений не більше ніж в одній заявці не в статусі rejected.
 5. **Tournament - Encounter (1:N)**. Турнір містить 0..N зустрічей, кожна зустріч належить строго одному турніру.
 6. **Tournament_Application - Encounter (три зв'язки 1:N)**. Зустріч має першу команду, другу команду та переможця - кожна з них є заявкою і кожна необов'язкова (0..1): учасники зустрічей наступних етапів невідомі до завершення попередніх, переможець - до завершення зустрічі. Заявка може брати участь у 0..N зустрічах.
 7. **Encounter - Encounter (1:N, рекурсивний)**. Зустріч має необов'язкове (0..1) посилання на наступну зустріч у сітці для просування переможця; до однієї зустрічі можуть вести 0..N попередніх.
