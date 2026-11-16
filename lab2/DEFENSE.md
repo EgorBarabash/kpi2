@@ -71,3 +71,6 @@ ADR: 0007-team-invite.md
 
 Як перевірив: за критерієм 9 spec лаби 2. Кожен актор відповідає User або ролі в ERD (team_role, User.role, Tournament.organizer_id), крім Гостя й Відвідувача. Кожна сутність зі сценаріїв і BR існує в ERD. Кожна зміна моделі має ADR. Після prompt1 і prompt3 перевірив ERD за критеріями 1–8 spec лаби 1.
 
+## Здача:
+
+PR: https://github.com/EgorBarabash/kpi2/pull/2
