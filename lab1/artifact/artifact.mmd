@@ -82,8 +82,8 @@ erDiagram
 
     Tournament_Application {
         uuid id PK
-        uuid tournament_id FK, UK "UK(tournament_id, team_id)"
-        uuid team_id FK, UK "UK(tournament_id, team_id)"
+        uuid tournament_id FK
+        uuid team_id FK
         tournament_participant_status status
     }
 
