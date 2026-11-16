@@ -1,0 +1,111 @@
+@startuml use-cases
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #F5F5FF
+  BorderColor #6464A0
+}
+
+' ===== Актори =====
+actor "Відвідувач\n<<абстрактний>>" as Visitor
+actor "Гість" as Guest
+actor "Користувач" as User
+actor "Представник команди\n<<абстрактний>>" as TeamRep
+actor "Капітан" as Captain
+actor "Тренер" as Coach
+actor "Організатор" as Organizer
+actor "Адміністратор платформи" as Admin
+
+' ===== Узагальнення акторів =====
+Guest --|> Visitor
+User --|> Visitor
+TeamRep --|> User
+Organizer --|> User
+Admin --|> User
+Captain --|> TeamRep
+Coach --|> TeamRep
+
+rectangle "Платформа аматорських кіберспортивних турнірів" {
+  ' Відвідувач
+  usecase "UC-02 Знайти турнір" as UC02
+  usecase "UC-03 Переглянути\nрезультати турніру" as UC03
+  usecase "UC-20 Знайти матч" as UC20
+  usecase "UC-21 Переглянути матч" as UC21
+  usecase "UC-22 Переглянути\nстатистику гравця" as UC22
+
+  ' Гість
+  usecase "UC-01 Зареєструватися" as UC01
+
+  ' Користувач
+  usecase "UC-06 Створити команду" as UC06
+  usecase "UC-07 Прийняти запрошення\nдо команди" as UC07
+  usecase "UC-28 Відхилити запрошення\nдо команди" as UC28
+  usecase "UC-27 Покинути команду" as UC27
+  usecase "UC-15 Редагувати профіль" as UC15
+  usecase "UC-08 Прив'язати\nігровий акаунт" as UC08
+  usecase "UC-09 Створити турнір" as UC09
+
+  ' Представник команди
+  usecase "UC-04 Подати заявку\nна турнір" as UC04 #FFF2CC
+  usecase "UC-23 Обрати склад заявки" as UC23
+  usecase "UC-24 Змінити склад заявки" as UC24
+  usecase "UC-25 Переглянути заявки\nсвоєї команди" as UC25
+
+  ' Капітан
+  usecase "UC-05 Запросити гравця\nдо команди" as UC05
+  usecase "UC-13 Виключити учасника\nз команди" as UC13
+  usecase "UC-14 Змінити роль учасника" as UC14
+
+  ' Організатор
+  usecase "UC-10 Розглянути заявку" as UC10
+  usecase "UC-26 Розпочати турнір" as UC26
+  usecase "UC-11 Сформувати\nтурнірну сітку" as UC11
+  usecase "UC-12 Внести результат матчу" as UC12
+  usecase "UC-17 Внести статистику\nгравців" as UC17
+
+  ' Адміністратор платформи
+  usecase "UC-16 Додати гру" as UC16
+}
+
+' ===== Асоціації актор - UC =====
+Visitor --> UC02
+Visitor --> UC03
+Visitor --> UC20
+Visitor --> UC21
+Visitor --> UC22
+
+Guest --> UC01
+
+User --> UC06
+User --> UC07
+User --> UC28
+User --> UC27
+User --> UC15
+User --> UC08
+User --> UC09
+
+TeamRep --> UC04
+TeamRep --> UC23
+TeamRep --> UC24
+TeamRep --> UC25
+
+Captain --> UC05
+Captain --> UC13
+Captain --> UC14
+
+Organizer --> UC10
+Organizer --> UC26
+Organizer --> UC11
+Organizer --> UC12
+Organizer --> UC17
+
+Admin --> UC16
+
+' ===== include / extend =====
+UC04 ..> UC23 : <<include>>
+UC24 ..> UC23 : <<include>>
+UC08 ..> UC15 : <<extend>>
+UC17 ..> UC12 : <<extend>>
+
+@enduml

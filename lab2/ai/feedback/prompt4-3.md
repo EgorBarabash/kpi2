@@ -1,0 +1,1 @@
+2. requirements.md. FR-04 і FR-06 посилаються на статуси pending, accepted або invalid, але в BR-01, BR-02 написано: не в статусі rejected.
