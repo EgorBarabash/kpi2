@@ -20,29 +20,29 @@
 
 - **Представник команди** - актор з лаби 2 (Капітан або Тренер). Це User з активною роллю captain або coach у Team_Member_Role.
 - **WebUI** - сторінка турніру й форма заявки в браузері. Сутності ER не відповідає, лише показує дані.
-- **ApplicationController** - приймає HTTP-запит, бере userId із сесії й переводить помилки сервісу в HTTP-коди: BR-07 -> 403; BR-01, BR-02, BR-04, BR-06 -> 409; BR-03, BR-05 -> 422. Сутності ER не відповідає.
+- **ApplicationController** - приймає запит від WebUI, бере userId із сесії, передає запит сервісу й повертає у WebUI результат або помилку. Помилка - тип `ApplicationError(BR-xx)`, без HTTP-коду (ADR 0014). Сутності ER не відповідає.
 - **ApplicationService** - перевіряє BR-01…BR-07 і створює заявку. Відповідає Tournament_Application як головній сутності UC-04.
 - **TournamentRepository** - Tournament: status, game_id, min_team_players, max_team_players, max_teams.
 - **TeamMemberRepository** - Team_Member і Team_Member_Role. Ролі належать учаснику команди, тому їх читає той самий репозиторій. Team окремого репозиторію не має: команда приходить у запиті як teamId, а її статус active - передумова UC-04.
 - **GameAccountRepository** - Game_Account (user_id, game_id).
 - **ApplicationRepository** - Tournament_Application разом зі складом заявки. Склад окремою сутністю в ER не є, тому окремого репозиторію не має.
-- **БД** - одна база даних. Кожен репозиторій робить до неї один запит і отримує результат.
+- **БД** - одна база даних. Кожен репозиторій робить до неї один запит у форматі `query(таблиця, filter)` і отримує результат.
 
 ## 4. Кроки по сценаріях
 
-Порядок перевірок у ApplicationService однаковий для всіх сценаріїв: BR-07 -> BR-04 -> BR-06 -> BR-01 -> BR-05 -> BR-03 -> BR-02 -> save. На першому порушенні сервіс повертає помилку, а наступні перевірки не виконуються.
+Порядок перевірок у ApplicationService однаковий для всіх сценаріїв: BR-07 -> BR-04 -> BR-06 -> BR-01 -> BR-05 -> BR-03 -> BR-02 -> save. На першому порушенні сервіс повертає помилку, а наступні перевірки не виконуються (ADR 0012). Кожен `alt` має дві гілки: гілка свого сценарію - повна, протилежна - коротка, без деталей (лише return помилки або "далі перевірки").
 
-- **S-01.** WebUI -> `submitApplication(tournamentId, teamId, playerIds)` -> сервіс. Сервіс по черзі викликає `findActiveRoles(teamId, userId)` -> [captain, player], `findById(tournamentId)` -> registration, `countAccepted(tournamentId)` -> 3, `findNotRejectedByTeam(tournamentId, teamId)` -> немає, `findActivePlayers(teamId)`, `findUsersWithAccount(playerIds, gameId)`, `findPlayersInNotRejected(tournamentId, playerIds)` -> немає. Далі `save(application)` -> заявка pending, і по ланцюгу назад іде 201. `alt` - на перевірці BR-07.
-- **S-02.** Те саме, що S-01, до BR-03: `findUsersWithAccount` повертає склад без Степана. Сервіс викликає `findReplacementPlayers(teamId, gameId, playerIds)` -> є кандидати; контролер повертає 422 "в гравця Степан немає акаунта для гри CS2". `loop` "поки у складі є гравець без акаунта": Олена замінює Степана на Тараса й надсилає знову; другий прохід доходить до save -> pending.
-- **S-03.** `findNotRejectedByTeam` -> заявка pending. `alt [заявка не rejected існує]` -> 409 "команда вже має заявку на цей турнір"; save не викликається.
+- **S-01.** WebUI -> `submitApplication(tournamentId, teamId, playerIds)` -> сервіс. Сервіс по черзі викликає `findActiveRoles(teamId, userId)` -> [captain, player], `findById(tournamentId)` -> registration, `countAccepted(tournamentId)` -> 3, `findNotRejectedByTeam(tournamentId, teamId)` -> немає, `findActivePlayers(teamId)`, `findUsersWithAccount(playerIds, gameId)`, `findPlayersInNotRejected(tournamentId, playerIds)` -> немає. Далі `save(application)` -> заявка pending, і по ланцюгу назад до WebUI іде створена заявка. `alt` - на перевірці BR-07.
+- **S-02.** Те саме, що S-01, до BR-03: `findUsersWithAccount` повертає склад без Степана. Сервіс викликає `findReplacementPlayers(teamId, gameId, playerIds)` -> є кандидати; сервіс повертає `ApplicationError(BR-03)` "в гравця Степан немає акаунта для гри CS2". `loop` "поки у складі є гравець без акаунта": Олена замінює Степана на Тараса й надсилає знову; другий прохід доходить до save -> pending.
+- **S-03.** `findNotRejectedByTeam` -> заявка pending. `alt [заявка не rejected існує]` -> `ApplicationError(BR-01)` "команда вже має заявку на цей турнір"; save не викликається.
 - **S-04.** `findNotRejectedByTeam` -> немає (rejected-заявку запит не враховує). `alt [немає]` -> решта перевірок і save нової заявки pending. Відхилена заявка не змінюється: викликів до неї немає.
-- **S-05.** Перевірки до BR-02 проходять; `findPlayersInNotRejected` -> [Андрій] (заявка "Левів", accepted). `alt` -> 409 "гравець Андрій уже заявлений на цей турнір".
-- **S-06.** Команда "Сови", Дмитро. `findUsersWithAccount` -> без Сергія; `findReplacementPlayers` -> порожньо. `alt [замін немає]` -> 422 "в гравця Сергій немає акаунта для гри CS2; в команді немає іншого активного гравця з акаунтом".
-- **S-07.** `findById` -> турнір "Літній кубок", ongoing. `alt [status ≠ registration]` -> 409 "реєстрацію на турнір закрито".
-- **S-08.** Після BR-01 сервіс рахує розмір складу. `alt [5 ≤ кількість ≤ 7 - приклади 5, 7]` -> решта перевірок і save -> pending; `else [кількість < 5 або > 7 - приклади 4, 8]` -> 422 "допустимий розмір складу від 5 до 7".
-- **S-09.** Інший виклик: WebUI -> `getAvailablePlayers(teamId)` -> сервіс. Спершу `findActiveRoles(teamId, userId)` (BR-07). `alt [роль captain або coach]` -> `findActivePlayers(teamId)` -> активні учасники з роллю player, у списку немає Ігоря (у нього лише coach); `else` -> 403. Заявка не створюється.
-- **S-10.** Турнір "Зимовий кубок": `countAccepted` -> 16, max_teams = 16. `alt [accepted ≥ max_teams]` -> 409 "всі місця в турнірі зайнято".
-- **S-11.** Марта: `findActiveRoles` -> [player]. `alt [немає captain і coach]` -> 403 "відмова через відсутність ролі captain або coach". Інших викликів немає.
+- **S-05.** Перевірки до BR-02 проходять; `findPlayersInNotRejected` -> [Андрій] (заявка "Левів", accepted). `alt` -> `ApplicationError(BR-02)` "гравець Андрій уже заявлений на цей турнір".
+- **S-06.** Команда "Сови", Дмитро. `findUsersWithAccount` -> без Сергія; `findReplacementPlayers` -> порожньо. `alt [замін немає]` -> одна помилка `ApplicationError(BR-03)` з двома частинами: "в гравця Сергій немає акаунта для гри CS2" і "в команді немає іншого активного гравця з акаунтом для гри CS2".
+- **S-07.** `findById` -> турнір "Літній кубок", ongoing. `alt [status ≠ registration]` -> `ApplicationError(BR-04)` "реєстрацію на турнір закрито".
+- **S-08.** Після BR-01 сервіс рахує розмір складу. `alt [5 ≤ кількість ≤ 7 - приклади 5, 7]` -> решта перевірок і save -> pending; `else [кількість < 5 або > 7 - приклади 4, 8]` -> `ApplicationError(BR-05)` "допустимий розмір складу від 5 до 7".
+- **S-09.** Інший виклик: WebUI -> `getAvailablePlayers(teamId)` -> сервіс. Спершу `findActiveRoles(teamId, userId)` (BR-07). `alt [роль captain або coach]` -> `findActivePlayers(teamId)` -> активні учасники з роллю player, у списку немає Ігоря (у нього лише coach); `else` -> `ApplicationError(BR-07)`. Заявка не створюється.
+- **S-10.** Турнір "Зимовий кубок": `countAccepted` -> 16, max_teams = 16. `alt [accepted ≥ max_teams]` -> `ApplicationError(BR-06)` "всі місця в турнірі зайнято".
+- **S-11.** Марта: `findActiveRoles` -> [player]. `alt [немає captain і coach]` -> `ApplicationError(BR-07)` "відмова через відсутність ролі captain або coach". Інших викликів немає.
 - **S-12.** Як S-01, але `findActiveRoles` для Ігоря -> [coach]. Біля `alt` стоїть `note`: "coach -> BR-07 пройдено". Далі ті самі виклики й save -> pending.
 
 ## 5. Поза обсягом
@@ -50,16 +50,17 @@
 - **UC-10 "Розглянути заявку" і UC-24 "Змінити склад заявки"** - межа UC-04 закінчується на заявці pending.
 - **UC-23 "Обрати склад заявки"** - показую лише в S-09, бо цей сценарій перевіряє саме вибір складу.
 - **Аутентифікація (вхід, сесія, перевірка токена)** - у всіх сценаріях користувач уже увійшов; контролер отримує готовий userId.
+- **Одночасні й повторні заявки** - у Gherkin немає сценарію одночасних запитів, а механізм захисту (транзакція, блокування, унікальний індекс) - рівень реалізації БД, вирішується в лабі 5 (ADR 0013). Діаграми показують порядок перевірок одного запиту.
 
 ## 6. Критерії прийняття
 
 1. На кожен тег S-01…S-12 є рівно одна діаграма `diagrams/S-xx.md`; у кожній є щонайменше один фрагмент `alt`, `opt` або `loop`.
-2. У всьому наборі є щонайменше один `par` або `loop` (`loop` у S-02).
+2. У всьому наборі є щонайменше один `par` або `loop` (`loop` у S-02). Кожен `alt` має обидві гілки: гілка свого сценарію - повна, протилежна - коротка.
 3. Activation bar учасника, який працює поза фрагментом або в кількох гілках, починається до фрагмента й закінчується після нього.
 4. На кожен синхронний виклик є return-повідомлення (пунктирна стрілка) з результатом або помилкою.
-5. Виклики названі як методи з параметрами, наприклад `submitApplication()` чи `findActiveRoles()`, а не "перевірити".
+5. Виклики названі як методи з параметрами, наприклад `submitApplication()` чи `findActiveRoles()`, а не "перевірити". Виклики репозиторій -> БД мають формат `query(таблиця, filter)`.
 6. Кожен репозиторій відповідає сутності ER з лаби 1 (розділ 3); у діаграмах немає учасників, яких нема в розділі 3.
-7. Кроки, статуси й тексти помилок збігаються з Gherkin: ті самі BR, статуси (registration, ongoing, pending, accepted, rejected) і дані (Олена, Степан, "Кубок осені" тощо). HTTP-коди збігаються з розділом 3.
+7. Кроки, статуси й тексти помилок збігаються з Gherkin: ті самі BR, статуси (registration, ongoing, pending, accepted, rejected) і дані (Олена, Степан, "Кубок осені" тощо). Помилка - тип `ApplicationError(BR-xx)` з номером того самого BR, що в Gherkin; HTTP-кодів на діаграмах немає.
 8. Порядок перевірок BR однаковий у всіх діаграмах (розділ 4); після помилки викликів save немає.
-9. У діаграмах немає учасників і викликів із розділу 5.
+9. У діаграмах немає учасників і викликів із розділу 5, зокрема `critical`, транзакцій і гілок конфлікту при save.
 10. Формат: Mermaid `sequenceDiagram` у блоці ```mermaid у `.md`; підписи й стрілки не перетинаються.
