@@ -63,3 +63,6 @@ ADR: 0012-br-check-order.md
 6. Імена атрибутів у camelCase - у фільтрах snake_case з ER, у методах camelCase.
 
 
+## Здача:
+
+PR: https://github.com/EgorBarabash/kpi2/pull/3
