@@ -1,0 +1,1 @@
+1.У S-01 у spec.md пропущено контролер.На діаграмі контролер передає сервісу ще userId, а в spec ні (критерій 5). Виправити spec: WebUI -> Controller `submitApplication(tournamentId, teamId, playerIds)`, Controller -> Service `submitApplication(tournamentId, teamId, playerIds, userId)`;

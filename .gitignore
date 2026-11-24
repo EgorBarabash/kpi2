@@ -1,0 +1,12 @@
+# Editor / IDE
+*.code-workspace
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local course materials (not part of submission)
+test/
